@@ -28,21 +28,75 @@ namespace TucDemoAjax.Pages
             public int HomeScores { get; set; }
             public int AwayScores { get; set; }
             public string Datum { get; set; }
+
+            public DateTime Date { get; set; }
         }
-        public void OnGet()
+        
+        public IActionResult OnGetPlayer()
         {
-            
-            GameListItems = _dbContext.Games.OrderByDescending(r=>r.Date)
-                .Select(r => new GameListItem
+            return new JsonResult( new
             {
+                Namn = "Ahoy!",
+                Jersey = 11
+            });
+        }
+
+        public IActionResult OnGetSpectators(int id)
+        {
+            var game = _dbContext.Games.First(g => g.Id == id);
+
+            return new JsonResult(new
+            {
+                spectators = game.Spectators
+            }); 
+        }
+
+        public IActionResult OnGetFetch10Games(long lastTicks)
+        {
+            DateTime dateOfLastShown = new DateTime(lastTicks);
+
+            var list = _dbContext.Games.OrderByDescending(r => r.Date)
+                .Where(m => lastTicks == 0 || m.Date < dateOfLastShown)
+                .Take(10)
+                .Select(r => new GameListItem
+                {
                     Id = r.Id,
                     AwayScores = r.Awayscores,
                     Awayteam = r.Away.Name,
                     Datum = r.Date.ToString("yyyy-MM-dd"),
+                    Date = r.Date,
                     HomeScores = r.Homescores,
                     Hometeam = r.Home.Name
 
-            }).ToList();
+                }).ToList();
+
+            lastTicks = 0;
+            if (list.Any())
+            {
+                lastTicks = list.Last().Date.Ticks;
+            }
+
+            return new JsonResult(new
+            { 
+                items = list,
+                lastTicks
+            });
+        }
+
+        public void OnGet()
+        {
+            
+            //GameListItems = _dbContext.Games.OrderByDescending(r=>r.Date)
+            //    .Select(r => new GameListItem
+            //{
+            //        Id = r.Id,
+            //        AwayScores = r.Awayscores,
+            //        Awayteam = r.Away.Name,
+            //        Datum = r.Date.ToString("yyyy-MM-dd"),
+            //        HomeScores = r.Homescores,
+            //        Hometeam = r.Home.Name
+
+            //}).ToList();
         }
     }
 }

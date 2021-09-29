@@ -4,25 +4,70 @@
 }
 
 
-<table class="table">
+<table id="posts-table" class="table">
     <thead>
         <tr>
             <th scope="col">Date</th>
             <th scope="col">Teams</th>
             <th scope="col">Result</th>
+            <th scope="col">Spectators</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.GameListItems)
-        {
-
-            <tr>
-                <td>@item.Datum</td>
-                <td>@item.Hometeam - @item.Awayteam</td>
-                <td>@item.HomeScores - @item.AwayScores</td>
-            </tr>
-        }
     </tbody>
 </table>
 
+<button type="button" onclick="fetch10Games()">Next 10 Games</button>
 
+<button type="button" onclick="fetchMore()">Fetch a player</button>
+
+<h3 id="playerName"></h3>
+<h4 id="playerJersey"></h4>
+
+<script>
+
+    lastTicks = 0;
+
+    function fetchMore() {
+        fetch("/Games?handler=player")
+            .then((res) => res.json())
+            .then((json) => {
+                console.log(json);
+            });
+    }
+
+
+    function fetch10Games() {
+        fetch("/Games?handler=fetch10games&lastTicks=" + lastTicks)
+            .then((res) => res.json())
+            .then((json) => {
+                lastTicks = json.lastTicks;
+                json.items.forEach(tableElements);
+                console.log(json);
+               /* $('#awayScore').text(json.awayScores);*/
+            });
+    }
+
+    function tableElements(element, index, arr) {
+        document.querySelector('#posts-table tbody').innerHTML +=
+            `<tr>
+                <td>${element.datum}</td>
+                <td>${element.hometeam} - ${element.awayteam}</td>
+                <td>${element.homeScores} - ${element.awayScores}</td>
+                <td><button type="button" onclick="fetchSpectators(${element.id})">View spectators</button></td>
+             </tr>`;
+    }
+
+    function fetchSpectators(id) {
+        fetch("/Games?handler=spectators&id=" + id)
+            .then((res) => res.json())
+            .then((json) => {
+                console.log(json.spectators);
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch10Games();
+    });
+
+</script>
